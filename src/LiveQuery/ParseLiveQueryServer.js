@@ -357,12 +357,12 @@ class ParseLiveQueryServer {
         .then((user) => {
 
             // Pass along an empty array (of roles) if no user
-          if (!user) {
+          // if (!user) {
             return Parse.Promise.as([]);
-          }
+          // }
 
             // Then get the user's roles
-          return this.roleCache.getRoles(user.id);
+          // return this.roleCache.getRoles(user.id);
         }).
         then((roles) => {
 
