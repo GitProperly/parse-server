@@ -473,6 +473,18 @@ RestQuery.prototype.replaceEquality = function() {
   }
 };
 
+const processMiddleware = function (className, results, auth, middleware, index, promise) {
+  if (index < middleware.length) {
+    middleware[index](className, results, auth).then(function (results) {
+      processMiddleware(className, results, auth, middleware, index + 1, promise);
+    }, function (error) {
+      promise.reject(error);
+    });
+  } else {
+    promise.resolve(results);
+  }
+};
+
 const runQueryMiddleware = function (className, results, auth, config) {
   const promise = new Parse.Promise();
   console.log('start middleware');
