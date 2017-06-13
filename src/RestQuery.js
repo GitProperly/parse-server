@@ -462,7 +462,7 @@ const replaceEqualityConstraint = (constraint) => {
     });
   }
   return constraint;
-}
+};
 
 RestQuery.prototype.replaceEquality = function() {
   if (typeof this.restWhere !== 'object') {
@@ -471,7 +471,32 @@ RestQuery.prototype.replaceEquality = function() {
   for (const key in this.restWhere) {
     this.restWhere[key] = replaceEqualityConstraint(this.restWhere[key]);
   }
-}
+};
+
+const processMiddleware = function (className, results, auth, middleware, index, promise) {
+  if (index < middleware.length) {
+    middleware[index](className, results, auth).then(function (results) {
+      processMiddleware(className, results, auth, middleware, index + 1, promise);
+    }, function (error) {
+      promise.reject(error);
+    });
+  } else {
+    promise.resolve(results);
+  }
+};
+
+const runQueryMiddleware = function (className, results, auth, config) {
+  const promise = new Parse.Promise();
+  console.log('start middleware');
+  console.log(config);
+  console.log(config.queryMiddleware);
+  if (results.length > 0 && Object.prototype.toString.call(config.queryMiddleware) === '[object Array]') {
+    processMiddleware(className, results, auth, config.queryMiddleware, 0, promise);
+  } else {
+    promise.resolve(results);
+  }
+  return promise;
+};
 
 // Returns a promise for whether it was successful.
 // Populates this.response with an object that only has 'results'.
@@ -498,14 +523,18 @@ RestQuery.prototype.runFind = function(options = {}) {
         }
       }
 
-      this.config.filesController.expandFilesInObject(this.config, results);
+      return runQueryMiddleware(this.className, results, this.auth, this.config).then((results) => {
+        this.config.filesController.expandFilesInObject(this.config, results);
 
-      if (this.redirectClassName) {
-        for (var r of results) {
-          r.className = this.redirectClassName;
+        if (this.redirectClassName) {
+          for (var r of results) {
+            r.className = this.redirectClassName;
+          }
         }
-      }
-      this.response = {results: results};
+        this.response = {results: results};
+      });
+
+
     });
 };
 
