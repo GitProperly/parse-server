@@ -487,9 +487,6 @@ const processMiddleware = function (className, results, auth, middleware, index,
 
 const runQueryMiddleware = function (className, results, auth, config) {
   const promise = new Parse.Promise();
-  console.log('start middleware');
-  console.log(config);
-  console.log(config.queryMiddleware);
   if (results.length > 0 && Object.prototype.toString.call(config.queryMiddleware) === '[object Array]') {
     processMiddleware(className, results, auth, config.queryMiddleware, 0, promise);
   } else {
