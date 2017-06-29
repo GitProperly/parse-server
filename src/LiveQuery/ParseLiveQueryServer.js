@@ -51,9 +51,10 @@ class ParseLiveQueryServer {
     Parse.initialize(appId, javascriptKey, masterKey);
 
     // Initialize cache
-
-    const cacheControllerAdapter = loadAdapter(config.cacheAdapter, InMemoryCacheAdapter, {appId: appId});
-    this.cacheController = new CacheController(cacheControllerAdapter, appId);
+    if (!(config.cacheAdapter instanceof RedisCacheAdapter)) {
+      const cacheControllerAdapter = loadAdapter(config.cacheAdapter, InMemoryCacheAdapter, {appId: appId});
+      this.cacheController = new CacheController(cacheControllerAdapter, appId);
+    }
 
     // Initialize websocket server
     this.parseWebSocketServer = new ParseWebSocketServer(
