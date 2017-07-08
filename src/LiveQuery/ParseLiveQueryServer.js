@@ -90,6 +90,9 @@ class ParseLiveQueryServer {
 
     // Initialize sessionToken cache
     this.sessionTokenCache = new SessionTokenCache(config.cacheTimeout);
+
+    // hook up queryMiddleware
+    this.queryMiddleware = config.queryMiddleware || [];
   }
 
   // Message is the JSON object from publisher. Message.currentParseObject is the ParseObject JSON after changes.
@@ -232,7 +235,23 @@ class ParseLiveQueryServer {
               return null;
             }
             const functionName = 'push' + type;
-            client[functionName](requestId, currentParseObject);
+
+            let ssToken = client.getSubscriptionInfo(requestId).sessionToken;
+            this.sessionTokenCache.getUserId(ssToken).then(userId => {
+              return this.cacheController.role.get(ssToken).then(cUser => {
+                if (cUser) return cUser;
+                return (new Parse.Query(Parse.User)).equalTo("objectId", userId).find({useMasterKey:true}).then(user => {
+                  if (!user || !user.length) return undefined;
+                  this.cacheController.role.put(ssToken, user[0]);
+                  return JSON.parse(JSON.stringify(user[0]));
+                })
+              })
+            }).then(user => {
+              let result = currentParseObject;
+              (this.queryMiddleware || []).forEach(ware => result = ware(result.className, [result], {user: {getTeams: () => user.teams}})[0])
+              client[functionName](requestId, result);
+            });
+
           }, (error) => {
             logger.error('Matching ACL error : ', error);
           });
