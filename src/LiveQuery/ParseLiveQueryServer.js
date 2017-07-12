@@ -240,7 +240,7 @@ class ParseLiveQueryServer {
             this.sessionTokenCache.getUserId(ssToken).then(userId => {
               return this.cacheController.role.get(ssToken).then(cUser => {
                 if (cUser) return cUser;
-                return (new Parse.Query(Parse.User)).equalTo("objectId", userId).find({useMasterKey:true}).then(user => {
+                return (new Parse.Query(Parse.User)).equalTo("objectId", userId).limit(10000).find({useMasterKey:true}).then(user => {
                   if (!user || !user.length) return undefined;
                   this.cacheController.role.put(ssToken, user[0]);
                   return JSON.parse(JSON.stringify(user[0]));
@@ -392,6 +392,7 @@ class ParseLiveQueryServer {
             // Then get the user's roles
           var rolesQuery = new Parse.Query(Parse.Role);
           rolesQuery.equalTo("users", user);
+          rolesQuery.limit(10000);
 
             // fallback to direct query
           if (!(this.cacheController instanceof RedisCacheAdapter)) {
