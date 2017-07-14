@@ -391,14 +391,17 @@ class ParseLiveQueryServer {
             && this.cacheController.adapter instanceof RedisCacheAdapter) {
             return this.cacheController.role.get(user.id).then((roles) => {
               if (roles != null) {
+                console.log('LiveQuery: using roles from cache for user ' + user.id);
                 return roles.map(role => role.replace(/^role:/, ''));
               }
+              console.log('LiveQuery: loading roles from database as they\'re not cached for user ' + user.id);
               return this._loadRoles(user).then(roles => {
                 this.cacheController.role.put(user.id, roles.map(role => 'role:' + role));
                 return roles;
               })
             });
           } else { // fallback to direct query
+            console.log('LiveQuery: fallback: loading roles from database for user ' + user.id);
             return this._loadRoles(user);
           }
         }).
