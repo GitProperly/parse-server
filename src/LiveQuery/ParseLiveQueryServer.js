@@ -236,7 +236,7 @@ class ParseLiveQueryServer {
             }
             const functionName = 'push' + type;
 
-            let ssToken = client.getSubscriptionInfo(requestId).sessionToken;
+            const ssToken = client.getSubscriptionInfo(requestId).sessionToken;
             this.sessionTokenCache.getUserId(ssToken).then(userId => {
               return this.cacheController.role.get(ssToken).then(cUser => {
                 if (cUser) return cUser;
@@ -393,9 +393,9 @@ class ParseLiveQueryServer {
           rolesQuery.equalTo("users", user);
           rolesQuery.limit(10000);
 
-          if (this.cacheController 
-              && this.cacheController.adapter 
-              && this.cacheController.adapter instanceof RedisCacheAdapter) {
+          if (this.cacheController
+            && this.cacheController.adapter
+            && this.cacheController.adapter instanceof RedisCacheAdapter) {
             return this.cacheController.role.get(user.id).then((roles) => {
               if (roles != null) {
                 return roles.map(role => role.replace(/^role:/, ''));
