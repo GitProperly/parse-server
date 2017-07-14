@@ -360,7 +360,6 @@ class ParseLiveQueryServer {
 
       // Check if the user has any roles that match the ACL
       return new Parse.Promise((resolve, reject) => {
-
         // Resolve false right away if the acl doesn't have any roles
         const acl_has_roles = Object.keys(acl.permissionsById).some(key => key.startsWith("role:"));
         if (!acl_has_roles) {
@@ -369,7 +368,6 @@ class ParseLiveQueryServer {
 
         this.sessionTokenCache.getUserId(subscriptionSessionToken)
         .then((userId) => {
-
             // Pass along a null if there is no user id
           if (!userId) {
             return Parse.Promise.as(null);
@@ -388,11 +386,6 @@ class ParseLiveQueryServer {
             return Parse.Promise.as([]);
           }
 
-          // Then get the user's roles
-          var rolesQuery = new Parse.Query(Parse.Role);
-          rolesQuery.equalTo("users", user);
-          rolesQuery.limit(10000);
-
           if (this.cacheController
             && this.cacheController.adapter
             && this.cacheController.adapter instanceof RedisCacheAdapter) {
@@ -400,13 +393,13 @@ class ParseLiveQueryServer {
               if (roles != null) {
                 return roles.map(role => role.replace(/^role:/, ''));
               }
-              return rolesQuery.find({useMasterKey:true}).then(roles => {
-                this.cacheController.role.put(user.id, roles.map(role => 'role:' + role.getName()));
+              return this._loadRoles(user).then(roles => {
+                this.cacheController.role.put(user.id, roles.map(role => 'role:' + role));
                 return roles;
               })
             });
           } else { // fallback to direct query
-            return rolesQuery.find({useMasterKey:true});
+            return this._loadRoles(user);
           }
         }).
         then(roles => {
@@ -419,7 +412,6 @@ class ParseLiveQueryServer {
 
       });
     }).then((isRoleMatched) => {
-
       if(isRoleMatched) {
         return Parse.Promise.as(true);
       }
@@ -433,6 +425,52 @@ class ParseLiveQueryServer {
       return Parse.Promise.as(isMatched);
     }, () => {
       return Parse.Promise.as(false);
+    });
+  }
+
+  _loadRoles(user: any): any {
+    const query = new Parse.Query(Parse.Role);
+    query.equalTo('users', user);
+    query.limit(10000);
+    return query.find({useMasterKey: true}).then((roles) => {
+      const roleIDs = roles.map((role) => role.id);
+      const names = roles.map(role => role.getName()); // in brackets?
+      const queriedRoles = {};
+      return this._getAllRolesNamesForRoleIds(roleIDs, names, queriedRoles);
+    });
+  }
+
+  _getAllRolesNamesForRoleIds(roleIDs: any, names: any, queriedRoles: any) {
+    const ins = roleIDs.filter((roleId) => {
+      return queriedRoles[roleId] !== true;
+    }).map((roleId) => {
+      queriedRoles[roleId] = true;
+      const role = new Parse.Role();
+      role.id = roleId;
+      return role;
+    });
+    if (ins.length === 0) {
+      return Promise.resolve([...names]);
+    }
+
+    const query = new Parse.Query(Parse.Role);
+    query.containedIn('roles', ins);
+    query.limit(10000);
+    return query.find({useMasterKey: true}).then((roles) => {
+      if (!roles.length) {
+        return Promise.resolve(names);
+      }
+
+      const ids = [];
+      roles.map((role) => {
+        names.push(role.getName());
+        ids.push(role.id);
+        queriedRoles[role.id] = queriedRoles[role.id] || false;
+      });
+
+      return this._getAllRolesNamesForRoleIds(ids, names, queriedRoles);
+    }).then((names) => {
+      return Promise.resolve([...names]);
     });
   }
 
