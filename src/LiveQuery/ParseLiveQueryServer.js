@@ -382,38 +382,35 @@ class ParseLiveQueryServer {
           return user;
 
         })
-        .then((user) => {
-
-            // Pass along an empty array (of roles) if no user
+        .then(user => {
+          // Pass along an empty array (of roles) if no user
           if (!user) {
             return Parse.Promise.as([]);
           }
 
-            // Then get the user's roles
+          // Then get the user's roles
           var rolesQuery = new Parse.Query(Parse.Role);
           rolesQuery.equalTo("users", user);
           rolesQuery.limit(10000);
 
-            // fallback to direct query
-          if (!(this.cacheController instanceof RedisCacheAdapter)) {
+          if (this.cacheController 
+              && this.cacheController.adapter 
+              && this.cacheController.adapter instanceof RedisCacheAdapter) {
+            return this.cacheController.role.get(user.id).then((roles) => {
+              if (roles != null) {
+                return roles.map(role => role.replace(/^role:/, ''));
+              }
+              return rolesQuery.find({useMasterKey:true}).then(roles => {
+                this.cacheController.role.put(user.id, roles.map(role => 'role:' + role.getName()));
+                return roles;
+              })
+            });
+          } else { // fallback to direct query
             return rolesQuery.find({useMasterKey:true});
           }
-
-            // use redis cache
-          return this.cacheController.role.get(user.id).then((roles) => {
-            if (roles != null) {
-              return roles.map(role => role.replace(/^role:/, ''));
-            }
-            return rolesQuery.find({useMasterKey:true}).then(roles => {
-              this.cacheController.role.put(user.id, roles.map(role => 'role:' + role.getName()));
-              return roles;
-            })
-          })
-
         }).
-        then((roles) => {
-
-            // Finally, see if any of the user's roles allow them read access
+        then(roles => {
+          // Finally, see if any of the user's roles allow them read access
           return resolve(!!~roles.findIndex(role => acl.getRoleReadAccess(role)));
         })
         .catch((error) => {
