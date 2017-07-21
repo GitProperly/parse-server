@@ -348,6 +348,10 @@ class ParseServer {
           /* eslint-enable no-console */
           process.exit(0);
         } else {
+          console.error('Unhandled error stack: ', err.stack);
+
+          var tempErr = new Error();
+          console.error('current stack: ', tempErr.stack);
           throw err;
         }
       });
