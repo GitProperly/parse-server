@@ -19,6 +19,7 @@ import { loadAdapter }          from '../Adapters/AdapterLoader';
 import { InMemoryCacheAdapter } from '../Adapters/Cache/InMemoryCacheAdapter';
 import { CacheController }      from '../Controllers/CacheController';
 import RedisCacheAdapter        from '../Adapters/Cache/RedisCacheAdapter';
+import { SessionTokenCache } from './SessionTokenCache';
 
 function getAllRolesNamesForRoleIds(roleIDs: any, names: any, queriedRoles: any) {
   const ins = roleIDs.filter((roleId) => {
