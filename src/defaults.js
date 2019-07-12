@@ -32,23 +32,8 @@ const computedDefaults = {
   logsFolder,
   verbose,
   level,
-<<<<<<< HEAD
-  silent: false,
-  enableAnonymousUsers: true,
-  allowClientClassCreation: true,
-  maxUploadSize: '20mb',
-  verifyUserEmails: false,
-  preventLoginWithUnverifiedEmail: false,
-  sessionLength: 31536000,
-  expireInactiveSessions: true,
-  revokeSessionOnPasswordReset: true,
-  schemaCacheTTL: 5000, // in ms
-  userSensitiveFields: ['email'],
   queryMiddleware: [],
-}
-=======
 };
 
 export default Object.assign({}, DefinitionDefaults, computedDefaults);
 export const DefaultMongoURI = DefinitionDefaults.databaseURI;
->>>>>>> master

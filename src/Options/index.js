@@ -196,7 +196,7 @@ export interface ParseServerOptions {
   :ENV: PARSE_SERVER_PLAYGROUND_PATH
   :DEFAULT: /playground */
   playgroundPath: ?string;
-
+  queryMiddleware: ?(any[]);
   serverStartComplete: ?(error: ?Error) => void;
 }
 

@@ -69,64 +69,6 @@ addParseCloud();
 // "maxLimit": optional upper bound for what can be specified for the 'limit' parameter on queries
 
 class ParseServer {
-<<<<<<< HEAD
-
-  constructor({
-    appId = requiredParameter('You must provide an appId!'),
-    masterKey = requiredParameter('You must provide a masterKey!'),
-    appName,
-    analyticsAdapter,
-    filesAdapter,
-    push,
-    scheduledPush = false,
-    loggerAdapter,
-    jsonLogs = defaults.jsonLogs,
-    logsFolder = defaults.logsFolder,
-    verbose = defaults.verbose,
-    logLevel = defaults.level,
-    silent = defaults.silent,
-    databaseURI = defaults.DefaultMongoURI,
-    databaseOptions,
-    databaseAdapter,
-    cloud,
-    collectionPrefix = '',
-    clientKey,
-    javascriptKey,
-    dotNetKey,
-    restAPIKey,
-    webhookKey,
-    fileKey,
-    userSensitiveFields = [],
-    enableAnonymousUsers = defaults.enableAnonymousUsers,
-    allowClientClassCreation = defaults.allowClientClassCreation,
-    oauth = {},
-    auth = {},
-    serverURL = requiredParameter('You must provide a serverURL!'),
-    maxUploadSize = defaults.maxUploadSize,
-    verifyUserEmails = defaults.verifyUserEmails,
-    preventLoginWithUnverifiedEmail = defaults.preventLoginWithUnverifiedEmail,
-    emailVerifyTokenValidityDuration,
-    accountLockout,
-    passwordPolicy,
-    cacheAdapter,
-    emailAdapter,
-    publicServerURL,
-    customPages = {
-      invalidLink: undefined,
-      verifyEmailSuccess: undefined,
-      choosePassword: undefined,
-      passwordResetSuccess: undefined
-    },
-    liveQuery = {},
-    sessionLength = defaults.sessionLength, // 1 Year in seconds
-    expireInactiveSessions = defaults.expireInactiveSessions,
-    revokeSessionOnPasswordReset = defaults.revokeSessionOnPasswordReset,
-    schemaCacheTTL = defaults.schemaCacheTTL, // cache for 5s
-    enableSingleSchemaCache = false,
-    __indexBuildCompletionCallbackForTests = () => {},
-    queryMiddleware = []
-  }) {
-=======
   /**
    * @constructor
    * @param {ParseServerOptions} options the parse server initialization options
@@ -141,7 +83,6 @@ class ParseServer {
       serverURL = requiredParameter('You must provide a serverURL!'),
       serverStartComplete,
     } = options;
->>>>>>> master
     // Initialize the node client SDK automatically
     Parse.initialize(appId, javascriptKey || 'unused', masterKey);
     Parse.serverURL = serverURL;
@@ -151,21 +92,9 @@ class ParseServer {
     const {
       loggerController,
       databaseController,
-<<<<<<< HEAD
-      schemaCacheTTL,
-      enableSingleSchemaCache,
-      userSensitiveFields,
-      pushWorker,
-      pushControllerQueue,
-      hasPushSupport,
-      hasPushScheduledSupport,
-      queryMiddleware
-    });
-=======
       hooksController,
     } = allControllers;
     this.config = Config.put(Object.assign({}, options, allControllers));
->>>>>>> master
 
     logging.setLogger(loggerController);
     const dbInitPromise = databaseController.performInitialization();

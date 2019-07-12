@@ -9,7 +9,12 @@ import { matchesQuery, queryHash } from './QueryTools';
 import { ParsePubSub } from './ParsePubSub';
 import SchemaController from '../Controllers/SchemaController';
 import _ from 'lodash';
-<<<<<<< HEAD
+import uuid from 'uuid';
+import { runLiveQueryEventHandlers } from '../triggers';
+import { getAuthForSessionToken, Auth } from '../Auth';
+import { getCacheController } from '../Controllers';
+import LRU from 'lru-cache';
+import UserRouter from '../Routers/UsersRouter';
 import { loadAdapter }          from '../Adapters/AdapterLoader';
 import { InMemoryCacheAdapter } from '../Adapters/Cache/InMemoryCacheAdapter';
 import { CacheController }      from '../Controllers/CacheController';
@@ -49,26 +54,9 @@ function getAllRolesNamesForRoleIds(roleIDs: any, names: any, queriedRoles: any)
   });
 }
 
-function defaultLoadRolesDelegate(user: any) {
-  console.log('defaultLoadRolesDelegate()');
-  const query = new Parse.Query(Parse.Role);
-  query.equalTo('users', user);
-  query.limit(10000);
-  return query.find({useMasterKey: true}).then(roles => {
-    const roleIDs = roles.map((role) => role.id);
-    const names = roles.map(role => role.getName()); // in brackets?
-    const queriedRoles = {};
-    return getAllRolesNamesForRoleIds(roleIDs, names, queriedRoles);
-  });
+function defaultLoadRolesDelegate(auth: any) {
+  return auth.getUserRoles();
 }
-=======
-import uuid from 'uuid';
-import { runLiveQueryEventHandlers } from '../triggers';
-import { getAuthForSessionToken, Auth } from '../Auth';
-import { getCacheController } from '../Controllers';
-import LRU from 'lru-cache';
-import UserRouter from '../Routers/UsersRouter';
->>>>>>> master
 
 class ParseLiveQueryServer {
   clients: Map;
@@ -106,21 +94,17 @@ class ParseLiveQueryServer {
     // with access to User and Roles
     this.cacheController = getCacheController(config);
 
-<<<<<<< HEAD
     // Initialize cache
     if (config.cacheAdapter instanceof RedisCacheAdapter) {
       const cacheControllerAdapter = loadAdapter(config.cacheAdapter, InMemoryCacheAdapter, {appId: appId});
       this.cacheController = new CacheController(cacheControllerAdapter, appId);
     }
-
-=======
     // This auth cache stores the promises for each auth resolution.
     // The main benefit is to be able to reuse the same user / session token resolution.
     this.authCache = new LRU({
       max: 500, // 500 concurrent
       maxAge: 60 * 60 * 1000, // 1h
     });
->>>>>>> master
     // Initialize websocket server
     this.parseWebSocketServer = new ParseWebSocketServer(
       server,
@@ -156,8 +140,6 @@ class ParseLiveQueryServer {
         );
       }
     });
-<<<<<<< HEAD
-
     // Initialize sessionToken cache
     this.sessionTokenCache = new SessionTokenCache(config.cacheTimeout);
 
@@ -167,8 +149,7 @@ class ParseLiveQueryServer {
     this.loadRolesDelegate = config.loadRolesDelegate || defaultLoadRolesDelegate;
 
     console.log('ParseLiveQueryServer - this.loadRolesDelegate:', this.loadRolesDelegate);
-=======
->>>>>>> master
+
   }
 
   // Message is the JSON object from publisher. Message.currentParseObject is the ParseObject JSON after changes.
@@ -368,20 +349,7 @@ class ParseLiveQueryServer {
                 } else {
                   return null;
                 }
-                const functionName = 'push' + type;
-                client[functionName](
-                  requestId,
-                  currentParseObject,
-                  originalParseObject
-                );
-              },
-              error => {
-                logger.error('Matching ACL error : ', error);
-              }
-<<<<<<< HEAD
-            } else {
-              return null;
-            }
+                
             const functionName = 'push' + type;
 
             const ssToken = client.getSubscriptionInfo(requestId).sessionToken;
@@ -403,9 +371,6 @@ class ParseLiveQueryServer {
           }, (error) => {
             logger.error('Matching ACL error : ', error);
           });
-=======
-            );
->>>>>>> master
         }
       }
     }
@@ -608,10 +573,6 @@ class ParseLiveQueryServer {
       return false;
     }
 
-<<<<<<< HEAD
-      // Check if the user has any roles that match the ACL
-      return new Parse.Promise((resolve, reject) => {
-=======
     const { auth, userId } = await this.getAuthForSessionToken(token);
 
     // Getting the session token failed
@@ -628,7 +589,6 @@ class ParseLiveQueryServer {
     // Check if the user has any roles that match the ACL
     return Promise.resolve()
       .then(async () => {
->>>>>>> master
         // Resolve false right away if the acl doesn't have any roles
         const acl_has_roles = Object.keys(acl.permissionsById).some(key =>
           key.startsWith('role:')
@@ -636,33 +596,12 @@ class ParseLiveQueryServer {
         if (!acl_has_roles) {
           return false;
         }
-
-<<<<<<< HEAD
         this.sessionTokenCache.getUserId(subscriptionSessionToken)
         .then((userId) => {
             // Pass along a null if there is no user id
           if (!userId) {
             return Parse.Promise.as(null);
-=======
-        const roleNames = await auth.getUserRoles();
-        // Finally, see if any of the user's roles allow them read access
-        for (const role of roleNames) {
-          // We use getReadAccess as `role` is in the form `role:roleName`
-          if (acl.getReadAccess(role)) {
-            return true;
->>>>>>> master
           }
-        }
-        return false;
-      })
-      .catch(() => {
-        return false;
-      });
-  }
-
-<<<<<<< HEAD
-            // Prepare a user object to query for roles
-            // To eliminate a query for the user, create one locally with the id
           var user = new Parse.User();
           user.id = userId;
           return user;
@@ -685,7 +624,6 @@ class ParseLiveQueryServer {
               console.log('LiveQuery: loading roles from database as they\'re not cached for user ' + user.id);
               return this.loadRolesDelegate(user, this.cacheController).then(roles => {
                 console.log(`LiveQuery: user: ${user.id}loaded roles:` + roles);
-              
                 this.cacheController.role.put(user.id, roles.map(role => 'role:' + role));
                 return roles;
               })
@@ -697,20 +635,17 @@ class ParseLiveQueryServer {
         }).
         then(roles => {
           // Finally, see if any of the user's roles allow them read access
-          return resolve(!!~roles.findIndex(role => acl.getRoleReadAccess(role)));
+          return !!~roles.findIndex(role => acl.getRoleReadAccess(role));
         })
         .catch((error) => {
           console.log('LiveQuery: error:', error);
-            
-          reject(error);
+          return false;
         });
 
       });
-    }).then((isRoleMatched) => {
-      if(isRoleMatched) {
-        return Parse.Promise.as(true);
-      }
-=======
+
+  }
+
   async _matchesACL(
     acl: any,
     client: any,
@@ -736,8 +671,6 @@ class ParseLiveQueryServer {
     if (await this._verifyACL(acl, clientSessionToken)) {
       return true;
     }
->>>>>>> master
-
     return false;
   }
 

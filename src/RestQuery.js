@@ -669,12 +669,7 @@ RestQuery.prototype.runFind = function(options = {}) {
           r.className = this.redirectClassName;
         }
       }
-<<<<<<< HEAD
-      this.response = {results: results};
-
-=======
       this.response = { results: results };
->>>>>>> master
     });
 };
 
