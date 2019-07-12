@@ -96,8 +96,8 @@ class ParseLiveQueryServer {
 
     // Initialize cache
     if (config.cacheAdapter instanceof RedisCacheAdapter) {
-      const cacheControllerAdapter = loadAdapter(config.cacheAdapter, InMemoryCacheAdapter, {appId: appId});
-      this.cacheController = new CacheController(cacheControllerAdapter, appId);
+      const cacheControllerAdapter = loadAdapter(config.cacheAdapter, InMemoryCacheAdapter, {appId: config.appId});
+      this.cacheController = new CacheController(cacheControllerAdapter, config.appId);
     }
     // This auth cache stores the promises for each auth resolution.
     // The main benefit is to be able to reuse the same user / session token resolution.
