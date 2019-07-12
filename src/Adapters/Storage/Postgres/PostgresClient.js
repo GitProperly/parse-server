@@ -1,4 +1,3 @@
-
 const parser = require('./PostgresConfigParser');
 
 export function createClient(uri, databaseOptions) {
@@ -23,5 +22,5 @@ export function createClient(uri, databaseOptions) {
     }
   }
 
-  return client;
+  return { client, pgp };
 }
