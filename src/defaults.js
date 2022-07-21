@@ -1,4 +1,4 @@
-import { nullParser } from './Options/parsers';
+const { nullParser } =  require('./Options/parsers');
 const { ParseServerOptions } = require('./Options/Definitions');
 const logsFolder = (() => {
   let folder = './logs/';
