@@ -2,6 +2,7 @@
 logs
 test_logs
 *.log
+lib/
 
 # Runtime data
 pids
